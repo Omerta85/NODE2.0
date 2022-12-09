@@ -9,9 +9,15 @@ const sendEmail = async (receiverMail, emailAction, locals = {}) => { // WELCOME
     console.log(emailAction, '- EMAIL SERVICE')
     const transporter = nodemailer.createTransport({
         service: 'gmail',
+        port:465,
+        secure: true,
+        secureConnection: false,
         auth: {
             user: NO_REPLY_EMAIL,
             pass: NO_REPLY_EMAIL_PASSWORD
+        },
+        tls:{
+            rejectUnAuthorized:true
         }
     });
 
