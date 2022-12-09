@@ -1,11 +1,15 @@
+const ActionToken = require('../dataBase/ActionToken');
 const OAuth = require('../dataBase/OAuth');
 const authValidator = require('../validator/auth.validator');
 const oauthService = require("../service/oauth.service");
+const OldPassword = require("../dataBase/OldPassword");
 
 const ApiError = require("../error/ApiError");
 const { tokenTypeEnum } = require('../enum');
 const emailService = require("../service/email.service");
 const { FORGOT_PASS } = require("../config/email-action.enum");
+const { FORGOT_PASSWORD } = require("../config/token-action.enum");
+const {comparePasswords, compareOldPasswords} = require("../service/oauth.service");
 
 module.exports = {
     isBodyValid: async (req, res, next) => {
@@ -67,5 +71,54 @@ module.exports = {
         } catch (e) {
             next(e);
         }
+    },
+
+    checkActionToken: async (req, res, next) => {
+        try {
+            const actionToken = req.get('Authorization');
+
+            if (!actionToken) {
+                throw new ApiError('No token', 401);
+            }
+
+            oauthService.checkActionToken(actionToken, FORGOT_PASSWORD);
+
+            const tokenInfo = await ActionToken
+                .findOne({ token: actionToken, tokenType: FORGOT_PASSWORD })
+                .populate('_user_id');
+
+            if (!tokenInfo) {
+                throw new ApiError('Token not valid', 401);
+            }
+
+            req.user = tokenInfo._user_id;
+
+            next();
+        } catch (e) {
+            next(e);
+        }
+    },
+
+    checkOldPassword: async (req, res, next) => {
+        try {
+            const{user, body} = req;
+            const oldPasswords = await OldPassword.find({_user_id: _id}).lean();
+            console.log(oldPasswords)
+            if(!oldPasswords.length)  {
+                return next();
+            }
+            const results = await Promise.all(oldPasswords.map((record) => compareOldPasswords(record.password, body.password))
+            );
+
+            const condition = results.some((record) => res);
+            console.log(condition)
+            if (condition) {
+                throw new ApiError('No token', 409);
+            }
+            next();
+        } catch (e) {
+            next(e);
+        }
     }
+
 }

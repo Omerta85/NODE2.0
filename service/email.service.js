@@ -1,16 +1,16 @@
 const nodemailer = require('nodemailer');
-const EmailTemplates = require('email-templates');
+const hbs = require('nodemailer-express-handlebars');
 const path = require('path');
-const { NO_REPLY_EMAIL, NO_REPLY_EMAIL_PASSWORD } = require('../config/config');
+const { NO_REPLY_EMAIL, NO_REPLY_EMAIL_PASSWORD, FRONTEND_URL } = require('../config/config');
 const emailTemplates = require('../email-templates');
 const ApiError = require("../error/ApiError");
 
-const sendEmail = async (receiverMail, emailAction, locals = {}) => { // WELCOME: "welcome",
-    console.log(emailAction, '- EMAIL SERVICE')
+const sendEmail = async (receiverMail, emailAction, context = {}) => {
     const transporter = nodemailer.createTransport({
+        from: 'No reply',
         service: 'gmail',
         port:465,
-        secure: true,
+        secure:true,
         secureConnection: false,
         auth: {
             user: NO_REPLY_EMAIL,
@@ -21,38 +21,35 @@ const sendEmail = async (receiverMail, emailAction, locals = {}) => { // WELCOME
         }
     });
 
-    console.log('EM TEM -__________________-');
-    console.log(emailTemplates);
-    console.log('EM TEM -__________________-');
-
     const templateInfo = emailTemplates[emailAction];
 
-    console.log('TEMP INFO (*************************8');
-    console.log(templateInfo);
-    console.log('TEMP INFO (*************************8');
-
-    if (!templateInfo) {
+    if (!templateInfo?.subject || !templateInfo.templateName) {
         throw new ApiError('Wrong template', 500);
     }
 
-    const templateRenderer = new EmailTemplates({
-        views: {
-            root: path.join(process.cwd(), 'email-templates')
-        }
-    });
+    const options = {
+        viewEngine: {
+            defaultLayout: 'main',
+            layoutsDir: path.join(process.cwd(), 'email-templates', 'layouts'),
+            partialsDir: path.join(process.cwd(), 'email-templates', 'partials'),
+            extname: '.hbs',
+        },
+        extName: '.hbs',
+        viewPath: path.join(process.cwd(), 'email-templates', 'views'),
+    }
 
-    Object.assign(locals || {}, { frontendURL: 'google.com' });
+    transporter.use('compile', hbs(options));
+    context.frontendURL = FRONTEND_URL;
 
-    const html = await templateRenderer.render(templateInfo.templateName, locals);
 
     return transporter.sendMail({
-        from: 'No reply',
         to: receiverMail,
         subject: templateInfo.subject,
-        html
+        template: templateInfo.templateName,
+        context,
     });
-}
+};
 
 module.exports = {
-    sendEmail
-}
+    sendEmail,
+};
