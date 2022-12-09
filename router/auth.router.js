@@ -9,4 +9,8 @@ router.post('/login', mdlwr.isBodyValid, userMdlwr.getUserDynamically('email'), 
 
 router.post('/refresh', authMdlwr.checkRefreshToken, controller.refresh);
 
+router.post('/logout', authMdlwr.checkAccessToken, controller.logout);
+
+router.post('/logoutAll', authMdlwr.checkAccessToken, controller.logoutAll);
+
 module.exports = router;
