@@ -5,7 +5,7 @@ const OldPasswordSchema = new Schema({
     password: { type: String },
 }, {
     timestamps: true,
-    versionKey: false
+    versionKey: false,
 });
 
 module.exports = model('OldPassword', OldPasswordSchema);

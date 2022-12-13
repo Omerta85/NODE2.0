@@ -21,9 +21,9 @@ module.exports = {
             throw new ApiError('Wrong email or password', 400);
         }
     },
+
     compareOldPasswords: (hashPassword, password) => {
         return bcrypt.compare(password, hashPassword);
-
     },
 
     generateAccessTokenPair: (dataToSign = {}) => {

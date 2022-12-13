@@ -1,21 +1,25 @@
-const {CronJob} = require('cron');
+const { CronJob } = require('cron');
 const dayjs = require('dayjs');
-const OAuth = require('../dataBase/OAuth')
+const OldPassword = require("../dataBase/OldPassword");
+
 const utc = require('dayjs/plugin/utc');
 
 dayjs.extend(utc);
 
 module.exports = new CronJob(
     '0,20,40 * * * * *',
-    async function () {
-        try{
-            console.log(dayjs('11.11.2020').utc().toISOString())
+    async function() {
+        try {
+            const users = await fetch('https://jsonplaceholder.typicode.com/users').then(a => a.json());
+            console.log(users)
+
             console.log('Start removing passwords')
             const yearAgo = dayjs().utc().subtract(1, 'year');
-            await OAuth.deleteMany({createAt: { $lte: yearAgo}});
+
+            await OldPassword.deleteMany({ createdAt: { $lte: yearAgo }});
             console.log('End removing passwords')
-        }catch (e) {
-            console.log(e);
+        } catch (e) {
+            console.error(e);
         }
     },
 );
