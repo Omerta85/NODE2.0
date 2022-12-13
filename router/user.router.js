@@ -18,7 +18,7 @@ router.put(
     '/:userId',
     mdlwr.isUserIdValid,
     mdlwr.isEditUserValid,
-    authMdlwr.checkAccessToken,
+    //authMdlwr.checkAccessToken,
     mdlwr.getUserDynamically('userId', 'params', '_id'),
     controller.updateUser
 );
